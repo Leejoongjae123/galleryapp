@@ -56,7 +56,27 @@ export function ExhibitionDetail({
   const handleSave = async () => {
     // 필수 필드 검증
     if (!editedExhibition.contents) {
-      alert("갤러리명과 전시회명은 필수 입력 항목입니다.");
+      addToast({
+        title: "필수 입력 항목 오류",
+        description: "갤러리명과 전시회명은 필수 입력 항목입니다.",
+        color: "danger",
+      });
+      return;
+    }
+    if (!editedExhibition.end_date) {
+      addToast({
+        title: "종료일 오류",
+        description: "종료일은 필수 입력 항목입니다.",
+        color: "danger",
+      });
+      return;
+    }
+    if (!editedExhibition.start_date) {
+      addToast({
+        title: "시작일 오류",
+        description: "시작일은 필수 입력 항목입니다.",
+        color: "danger",
+      });
       return;
     }
 

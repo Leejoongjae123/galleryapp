@@ -424,12 +424,12 @@ export function ExhibitionList({
             {exhibitions.map((exhibition) => (
               <TableRow key={exhibition.id}>
                 <TableCell>{exhibition.contents}</TableCell>
-                <TableCell>{exhibition.naver_gallery_url.name}</TableCell>
+                <TableCell>{exhibition.naver_gallery_url?.name}</TableCell>
                 <TableCell>{exhibition.start_date}</TableCell>
                 <TableCell>{exhibition.end_date}</TableCell>
                 <TableCell>
-                  <Link className="text-blue-500 underline" href={exhibition.naver_gallery_url.url} target="_blank">
-                    {exhibition.naver_gallery_url.url}
+                  <Link className="text-blue-500 underline" href={exhibition.naver_gallery_url?.url||"#"} target="_blank">
+                    {exhibition.naver_gallery_url?.url||"#"}
                   </Link>
                 </TableCell>
               </TableRow>
