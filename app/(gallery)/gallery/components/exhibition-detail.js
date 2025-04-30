@@ -86,6 +86,7 @@ export function ExhibitionDetail({
       return /^\d{8}$/.test(dateStr.trim());
     };
 
+    
     if (!validateDateFormat(editedExhibition.start_date)) {
       addToast({
         title: "날짜 형식 오류",
