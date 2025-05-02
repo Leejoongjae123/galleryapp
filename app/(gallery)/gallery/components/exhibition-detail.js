@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Input, Button, Textarea, Checkbox, addToast } from "@heroui/react";
+import { Input, Button, Textarea, Checkbox, addToast, useDisclosure, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { createClient } from "@/utils/supabase/client";
 
@@ -42,6 +42,7 @@ export function ExhibitionDetail({
     isNew ? null : exhibition?.photo || null
   );
   const [isSaving, setIsSaving] = useState(false);
+  const { isOpen, onOpen, onClose } = useDisclosure();
   const supabase = createClient();
 
   // selectedKey나 exhibition이 변경될 때 필요한 데이터 로드
@@ -148,9 +149,13 @@ export function ExhibitionDetail({
 
   // 삭제 핸들러
   const handleDelete = () => {
-    if (window.confirm("정말로 이 전시회를 삭제하시겠습니까?")) {
-      if (onDelete) onDelete();
-    }
+    onOpen();
+  };
+  
+  // 삭제 확인 핸들러
+  const handleConfirmDelete = () => {
+    if (onDelete) onDelete();
+    onClose();
   };
 
   // 필드 변경 핸들러
@@ -173,6 +178,7 @@ export function ExhibitionDetail({
     }
   };
   console.log("editedExhibition", editedExhibition);
+  
 
   return (
     <div className="space-y-6">
@@ -401,6 +407,27 @@ export function ExhibitionDetail({
           </div>
         </div>
       )}
+      
+      {/* 삭제 확인 모달 */}
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <ModalContent>
+          <ModalHeader>전시회 삭제 확인</ModalHeader>
+          <ModalBody>
+            <p>정말로 이 전시회를 삭제하시겠습니까?</p>
+            <p className="text-sm text-default-500 mt-2">
+              {editedExhibition.contents}
+            </p>
+          </ModalBody>
+          <ModalFooter>
+            <Button color="default" variant="flat" onPress={onClose}>
+              취소
+            </Button>
+            <Button color="danger" onPress={handleConfirmDelete}>
+              삭제
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </div>
   );
 }

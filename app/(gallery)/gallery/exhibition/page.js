@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { ExhibitionList } from "../components/exhibition-list";
 import { ExhibitionDetail } from "../components/exhibition-detail";
-import { Button, Input, Pagination, Switch, Textarea } from "@heroui/react";
+import { Button, Input, Pagination, Switch, Textarea, useDisclosure, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { createClient } from "@/utils/supabase/client";
 import { addToast } from "@heroui/react";
@@ -39,9 +39,10 @@ const formatDateRange = (startDate, endDate) => {
 };
 
 export default function Exhibition() {
-  const { userInfo } = useUserInfoStore();
+  const { userInfo,setUserInfo } = useUserInfoStore();
   // Supabase 클라이언트 생성
   const supabase = createClient();
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   // 상태 관리
   const [exhibitions, setExhibitions] = useState([]);
@@ -54,6 +55,24 @@ export default function Exhibition() {
   const [isLoading, setIsLoading] = useState(false);
   const [galleryInfo, setGalleryInfo] = useState(null);
   const itemsPerPage = 5;
+
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      const {data:user, error} = await supabase.auth.getUser();
+      if (error) {
+        console.error('사용자 정보 가져오기 오류:', error);
+      } else {
+        const {data:userInfo, error:userInfoError} = await supabase.from('profiles').select('*').eq('id', user?.user?.id).single();
+        if (userInfoError) {
+          console.error('사용자 정보 가져오기 오류:', userInfoError);
+        } else {
+          setUserInfo(userInfo);
+        }
+      }
+    };
+    fetchUserInfo();
+
+  }, []);
 
   useEffect(() => {
     if (userInfo?.url) {
@@ -348,30 +367,40 @@ export default function Exhibition() {
   // 전시회 삭제 핸들러
   const handleDelete = async () => {
     if (!selectedExhibition) return;
+    onOpen();
+  };
 
-    if (window.confirm("정말로 이 전시회를 삭제하시겠습니까?")) {
-      try {
-        // Supabase에서 전시회 삭제
-        const { error } = await supabase
-          .from("exhibition")
-          .delete()
-          .eq("id", selectedExhibition.id);
+  // 삭제 확인 핸들러
+  const handleConfirmDelete = async () => {
+    try {
+      // Supabase에서 전시회 삭제
+      const { error } = await supabase
+        .from("exhibition")
+        .delete()
+        .eq("id", selectedExhibition.id);
 
-        if (error) throw error;
+      if (error) throw error;
 
-        // 상태 초기화
-        setSelectedExhibition(null);
-        setSelectedKey(new Set([]));
+      // 상태 초기화
+      setSelectedExhibition(null);
+      setSelectedKey(new Set([]));
 
-        // 데이터 새로고침
-        loadExhibitions();
-      } catch (error) {
-        addToast({
-          title: "삭제 실패",
-          description: "전시회 삭제 중 오류가 발생했습니다.",
-          color: "danger",
-        });
-      }
+      // 데이터 새로고침
+      loadExhibitions();
+
+      addToast({
+        title: "삭제 완료",
+        description: "전시회가 성공적으로 삭제되었습니다.",
+        color: "success",
+      });
+    } catch (error) {
+      addToast({
+        title: "삭제 실패",
+        description: "전시회 삭제 중 오류가 발생했습니다.",
+        color: "danger",
+      });
+    } finally {
+      onClose();
     }
   };
 
@@ -751,6 +780,29 @@ export default function Exhibition() {
           )}
         </section>
       </div>
+
+      {/* 삭제 확인 모달 */}
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <ModalContent>
+          <ModalHeader>전시회 삭제 확인</ModalHeader>
+          <ModalBody>
+            <p>정말로 이 전시회를 삭제하시겠습니까?</p>
+            {selectedExhibition && (
+              <p className="text-sm text-default-500 mt-2">
+                {selectedExhibition.contents}
+              </p>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            <Button color="default" variant="flat" onPress={onClose}>
+              취소
+            </Button>
+            <Button color="danger" onPress={handleConfirmDelete}>
+              삭제
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </div>
   );
 }
