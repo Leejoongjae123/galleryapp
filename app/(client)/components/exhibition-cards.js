@@ -157,7 +157,7 @@ export function ExhibitionCards({ exhibitionCategory, user }) {
         // 기본 쿼리 시작
         let query = supabase
           .from("exhibition")
-          .select("*", { count: "exact" })
+          .select("*,naver_gallery_url(*)", { count: "exact" })
           .gte("end_date", new Date().toISOString())
           .order("review_count", { ascending: false });
 
@@ -256,7 +256,7 @@ export function ExhibitionCards({ exhibitionCategory, user }) {
                         <div className="flex flex-row justify-between items-start w-full">
                           <div className="flex flex-col">
                             <div className="text-[10px] ">
-                              {exhibition.name || "없음"}
+                              {exhibition?.naver_gallery_url?.name || "없음"}
                             </div>
                             <div className="text-[12px] font-bold">
                               {exhibition.contents}
