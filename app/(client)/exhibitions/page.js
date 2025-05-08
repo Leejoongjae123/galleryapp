@@ -47,6 +47,7 @@ function ExhibitionListContent() {
   const [tabLoading, setTabLoading] = useState(false);
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
+  const [galleriesLoaded, setGalleriesLoaded] = useState(false); // 갤러리 로드 상태 추적
   
   const supabase = createClient();
 
@@ -76,15 +77,11 @@ function ExhibitionListContent() {
             .limit(9)
         ]);
 
-        if (popularExhibitionsResponse.error) {
-          console.error("인기 전시회 데이터 로드 오류:", popularExhibitionsResponse.error);
-        } else {
+        if (!popularExhibitionsResponse.error) {
           setPopularExhibitions(popularExhibitionsResponse.data || []);
         }
 
-        if (highRatingExhibitionsResponse.error) {
-          console.error("평점 높은 전시회 데이터 로드 오류:", highRatingExhibitionsResponse.error);
-        } else {
+        if (!highRatingExhibitionsResponse.error) {
           setHighRatingExhibitions(highRatingExhibitionsResponse.data || []);
         }
 
@@ -103,6 +100,7 @@ function ExhibitionListContent() {
   useEffect(() => {
     setPage(1);
     setExhibitions([]);
+    setGalleriesLoaded(false);
     setLoading(true);
     setTabLoading(true);
   }, [selectedTab, isBookmark, selectedRegion]);
@@ -120,6 +118,7 @@ function ExhibitionListContent() {
         setHasMore(false);
         setLoading(false);
         setTabLoading(false);
+        setGalleriesLoaded(true);
         return;
       }
 
@@ -160,6 +159,7 @@ function ExhibitionListContent() {
           setHasMore(false);
           setLoading(false);
           setTabLoading(false);
+          setGalleriesLoaded(true);
           return;
         }
 
@@ -182,6 +182,7 @@ function ExhibitionListContent() {
         });
       }
 
+      setGalleriesLoaded(true);
       setHasMore(data.length === 5);
     } catch (error) {
       console.error("전시회 데이터를 가져오는 중 오류 발생:", error);
@@ -405,17 +406,19 @@ function ExhibitionListContent() {
           </div>
 
           {/* 가로 방향 캐러셀 추가 */}
-          <div className="w-[90%] mt-4 mb-2 ">
+          <div className="w-[90%] mt-4 mb-2">
             <div className="flex justify-between items-center mb-1">
               <h3 className="text-[18px] font-bold">인기 전시회</h3>
             </div>
-            <ExhibitionCarousel
-              exhibitions={popularExhibitions}
-              user={user}
-              bookmarks={bookmarks}
-              toggleBookmark={toggleBookmark}
-              isBookmarked={isBookmarked}
-            />
+            {popularExhibitions.length > 0 && (
+              <ExhibitionCarousel
+                exhibitions={popularExhibitions}
+                user={user}
+                bookmarks={bookmarks}
+                toggleBookmark={toggleBookmark}
+                isBookmarked={isBookmarked}
+              />
+            )}
           </div>
 
           {/* 커스텀 탭바 및 필터 영역 */}
@@ -519,11 +522,11 @@ function ExhibitionListContent() {
               </Checkbox>
             </div>
             {/* 전시회 카드 */}
-            {loading ? (
+            {tabLoading ? (
               <div className="flex justify-center items-center w-full my-8">
                 <Spinner variant="wave" size="lg" color="primary" />
               </div>
-            ) : (
+            ) : galleriesLoaded ? (
               <ExhibitionCards
                 exhibitions={exhibitions}
                 user={user}
@@ -531,6 +534,10 @@ function ExhibitionListContent() {
                 toggleBookmark={toggleBookmark}
                 isBookmarked={isBookmarked}
               />
+            ) : (
+              <div className="flex justify-center items-center w-full my-8">
+                <Spinner variant="wave" size="lg" color="primary" />
+              </div>
             )}
 
             {!loading && hasMore ? (
@@ -544,7 +551,7 @@ function ExhibitionListContent() {
               <div className="flex justify-center items-center">
                 <p className="text-gray-500 my-4">모든 전시회를 불러왔습니다</p>
               </div>
-            ) : !loading && exhibitions.length === 0 && (
+            ) : !loading && exhibitions.length === 0 && galleriesLoaded && (
               <div className="flex justify-center items-center py-8">
                 <p className="text-gray-500">전시회가 없습니다</p>
               </div>
@@ -568,11 +575,12 @@ function ExhibitionListContent() {
                       src={exhibition.photo}
                       alt={exhibition.name}
                       className="w-full h-[100px] aspect-square object-cover rounded-lg"
+                      loading="lazy"
                     />
                     <div className="text-[14px] font-bold line-clamp-1">
                       {exhibition.contents || "없음"}
                     </div>
-                    <div className="text-[13px] text-gray-500 flex items-center justify-start flex gap-1">
+                    <div className="text-[13px] text-gray-500 flex items-center justify-start gap-1">
                       <span className="text-yellow-500">
                         <FaStar className="text-[#007AFF]" />
                       </span>
