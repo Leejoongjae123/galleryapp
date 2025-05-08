@@ -6,6 +6,9 @@ import { IoMdPin } from "react-icons/io";
 import { FaRegStar } from "react-icons/fa";
 import { FaRegBookmark, FaBookmark } from "react-icons/fa6";
 import Link from "next/link";
+import { IoCalendarClear } from "react-icons/io5";
+import { FaMoneyBillWaveAlt } from "react-icons/fa";
+import { FaStar } from "react-icons/fa";
 
 export function GalleryCards({ galleries, user, bookmarks, toggleBookmark, isBookmarked }) {
   console.log('galleries333', galleries)
@@ -53,19 +56,11 @@ export function GalleryCards({ galleries, user, bookmarks, toggleBookmark, isBoo
                       />
                       <div className="text-xs flex flex-col my-2">
                         <div className="flex flex-row gap-1 text-[10px]">
-                          <img
-                            src="/exhibition/미니지도.svg"
-                            alt="미니지도"
-                            className="w-4 h-4"
-                          />
+                          <IoCalendarClear className="text-[#007AFF]" />
                           {gallery.address || gallery.location}
                         </div>
                         <div className="flex flex-row gap-1 text-[10px]">
-                          <img
-                            src="/exhibition/미니별점.png"
-                            alt="미니별점"
-                            className="w-4 h-4"
-                          />
+                          <FaStar className="text-[#007AFF]" />
                           {gallery.visitor_rating || "1.0"}({gallery.blog_review_count || 0})
                         </div>
                       </div>
