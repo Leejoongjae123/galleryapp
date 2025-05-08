@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Card, CardBody, Skeleton } from "@heroui/react";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
-
+import Image from "next/image";
 export function ExhibitionCarousel() {
   const [currentSlide, setCurrentSlide] = React.useState(0);
   const [touchStart, setTouchStart] = useState(0);
@@ -114,10 +114,15 @@ export function ExhibitionCarousel() {
             </Card>
           ) : banners.length > 0 && (
             
-              <img
+              <Image
                 src={banners[currentSlide]?.url || `https://picsum.photos/800/400?random=${currentSlide}`}
                 alt={banners[currentSlide]?.title || `Slide ${currentSlide + 1}`}
+                width={800}
+                height={400}
                 className="w-[90%] h-[200px] object-cover rounded-2xl"
+                loading="lazy"
+                placeholder="blur"
+                blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAEhgJAi9TUHAAAAABJRU5ErkJggg=="
               />
             
           )}

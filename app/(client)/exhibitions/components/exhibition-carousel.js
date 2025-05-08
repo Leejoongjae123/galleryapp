@@ -52,6 +52,7 @@ const ExhibitionCard = memo(({ exhibition, isDraggingRef }) => (
           height={140}
           className="h-[140px] w-full object-cover"
           loading="lazy"
+          
         />
       </div>
       <CardBody className="p-3">

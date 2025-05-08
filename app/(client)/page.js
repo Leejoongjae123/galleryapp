@@ -122,6 +122,9 @@ export default function Home() {
             alt="noimage"
             width={37}
             height={37}
+            loading="lazy"
+            placeholder="blur"
+            blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAEhgJAi9TUHAAAAABJRU5ErkJggg=="
           />
         </div>
         <div className="w-[70%] h-full text-[6px] flex flex-col justify-center items-center">

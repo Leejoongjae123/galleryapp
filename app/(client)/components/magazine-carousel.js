@@ -13,6 +13,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useEffect, useState } from "react";
 import { IoIosArrowForward } from "react-icons/io";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 export function MagazineCarousel() {
   const [currentSlide, setCurrentSlide] = React.useState(0);
   const [touchStart, setTouchStart] = React.useState(null);
@@ -100,13 +101,18 @@ export function MagazineCarousel() {
               <Card className="w-full">
                 <CardBody className="p-0">
                   <Link href={`/magazine/${magazines[currentSlide].id}`}>
-                    <img
+                    <Image
                       src={
                         magazines[currentSlide]?.photo[0]["url"] ||
                         `/images/noimage.jpg`
                       }
                       alt={magazines[currentSlide]?.title}
-                      className="w-full h-[454px] object-cover"
+                      width={800}
+                      height={454}
+                      className="object-cover"
+                      loading="lazy"
+                      placeholder="blur"
+                      blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAEhgJAi9TUHAAAAABJRU5ErkJggg=="
                     />
                   </Link>
                   <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent text-white">

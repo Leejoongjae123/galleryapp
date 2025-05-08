@@ -476,10 +476,12 @@ function GalleryListContent() {
               {highRatingGalleries.map((gallery) => (
                 <div key={gallery.id}>
                   <Link href={`/galleries/${gallery.id}`}>
-                    <img
+                    <Image
                       src={gallery.thumbnail || "/placeholder-gallery.jpg"}
                       alt={gallery.name}
-                      className="w-full h-[100px] aspect-square object-cover rounded-lg"
+                      width={100}
+                      height={100}
+                      className="w-full aspect-square object-cover rounded-lg"
                     />
                     <div className="text-[14px] font-bold line-clamp-1">
                       {gallery.name || "이름 없음"}

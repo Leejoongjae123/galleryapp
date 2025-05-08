@@ -18,6 +18,9 @@ import { createClient } from "@/utils/supabase/client";
 import useBookmarkStore from "./bookmarkStore";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { IoCalendarClear } from "react-icons/io5";
+import { FaMoneyBillWaveAlt } from "react-icons/fa";
+
 export function ExhibitionCards({ exhibitionCategory, user }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [exhibitions, setExhibitions] = useState([]);
@@ -238,10 +241,15 @@ export function ExhibitionCards({ exhibitionCategory, user }) {
                   >
                     <CardBody className="flex gap-4 flex-row w-full h-full justify-center items-center">
                       <div className="flex w-1/2 aspect-square overflow-hidden rounded justify-center items-center">
-                        <img
-                          src={exhibition.photo || "/images/noimage.jpg"}
+                        <Image
+                          src={exhibition.photo || "/noimage.jpg"}
                           alt={exhibition.name}
-                          className="w-[72px] h-[82px] object-cover"
+                          width={72}
+                          height={82}
+                          className="object-cover"
+                          loading="lazy"
+                          placeholder="blur"
+                          blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzIiIGhlaWdodD0iODIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjcyIiBoZWlnaHQ9IjgyIiBmaWxsPSIjZjBmMGYwIiAvPjwvc3ZnPg=="
                         />
                       </div>
                       <div className="flex flex-col w-full justify-center items-center h-full">
@@ -261,12 +269,8 @@ export function ExhibitionCards({ exhibitionCategory, user }) {
                           className=" bg-gray-300 mt-2"
                         />
                         <div className="text-xs flex flex-col my-2 w-full">
-                          <div className="flex flex-row gap-1">
-                            <img
-                              src="/exhibitioncard/미니달력.svg"
-                              alt="미니달력"
-                              className="w-[15px] h-[15px]"
-                            />
+                          <div className="flex flex-row gap-1 items-center">
+                            <IoCalendarClear className="text-[#007AFF] w-3 h-3" />
                             <span className="text-[10px]">
                               {exhibition.start_date?.replace(
                                 /(\d{4})(\d{2})(\d{2})/,
@@ -279,12 +283,9 @@ export function ExhibitionCards({ exhibitionCategory, user }) {
                               )}
                             </span>
                           </div>
-                          <div className="flex flex-row gap-1">
-                            <img
-                              src="/exhibitioncard/미니가격.png"
-                              alt="미니가격"
-                              className="w-[15px] h-[15px]"
-                            />
+                          <div className="flex flex-row gap-1 items-center">
+                            <FaMoneyBillWaveAlt className="text-[#007AFF] w-3 h-3" />
+                            
                             <span className="text-[10px]">
                               {exhibition.price
                                 ?.toString()

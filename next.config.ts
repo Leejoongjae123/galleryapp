@@ -7,7 +7,13 @@ const nextConfig: NextConfig = {
       "img1.kakaocdn.net", 
       "t1.kakaocdn.net",
       "k.kakaocdn.net",
-      "teaelrzxuigiocnukwha.supabase.co"
+      "teaelrzxuigiocnukwha.supabase.co",
+      "search.pstatic.net",
+      "picsum.photos",
+      "i.postimg.cc",
+      "mcst.go.kr",
+      "img0.yna.co.kr",
+      "www.culture.go.kr"
     ],
   },
   webpack(config) {

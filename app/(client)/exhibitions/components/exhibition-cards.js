@@ -8,7 +8,9 @@ import { FaRegBookmark, FaBookmark } from "react-icons/fa6";
 import Link from "next/link";
 import Image from "next/image";
 import { FaPlusCircle } from "react-icons/fa";
-
+import { FaStar } from "react-icons/fa";
+import { IoCalendarClear } from "react-icons/io5";
+import { FaMoneyBillWaveAlt } from "react-icons/fa";
 // 개별 전시회 카드 컴포넌트를 메모이제이션
 const ExhibitionCard = memo(({ exhibition, toggleBookmark, isBookmarked }) => {
   return (
@@ -23,6 +25,8 @@ const ExhibitionCard = memo(({ exhibition, toggleBookmark, isBookmarked }) => {
               height={80}
               className="object-cover rounded"
               loading="lazy"
+              placeholder="blur"
+              blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAEhgJAi9TUHAAAAABJRU5ErkJggg=="
             />
           </div>
 
@@ -48,12 +52,8 @@ const ExhibitionCard = memo(({ exhibition, toggleBookmark, isBookmarked }) => {
               className=" bg-gray-300"
             />
             
-            <div className="flex flex-row gap-1 text-[10px]">
-              <img
-                src="/exhibition/미니달력.svg"
-                alt="미니달력"
-                className="w-4 h-4"
-              />
+            <div className="flex flex-row gap-1 text-[10px] items-center">
+              <IoCalendarClear className="text-[#007AFF]" />
               {exhibition.start_date?.replace(
                 /(\d{4})(\d{2})(\d{2})/,
                 "$1년$2월$3일"
@@ -64,23 +64,16 @@ const ExhibitionCard = memo(({ exhibition, toggleBookmark, isBookmarked }) => {
                 "$1년$2월$3일"
               )}
             </div>
-            <div className="flex flex-row gap-1 text-[10px]">
-              <img
-                src="/exhibition/미니가격.png"
-                alt="미니가격"
-                className="w-4 h-4"
-              />
+            <div className="flex flex-row gap-1 text-[10px] items-center">
+              <FaMoneyBillWaveAlt className="text-[#007AFF]" />
               {exhibition.price
                 ?.toString()
                 .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}{" "}
               원
             </div>
-            <div className="flex flex-row gap-1 text-[10px]">
-              <img
-                src="/exhibition/미니별점.png"
-                alt="미니별점"
-                className="w-4 h-4"
-              />
+            <div className="flex flex-row gap-1 text-[10px] items-center">
+            <FaStar className="text-[#007AFF]" />
+
               {exhibition.review_average === 0 ? "1.0" : exhibition.review_average?.toFixed(1) || "1.0"} (
               {exhibition.review_count || 0})
             </div>
