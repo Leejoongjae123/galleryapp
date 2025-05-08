@@ -68,23 +68,27 @@ export function MagazineCarousel() {
 
   return (
     <div className="space-y-4 w-full justify-center items-center px-5 relative">
-      <div onClick={() => router.push("/magazineList")} className="absolute top-7 right-4 flex items-center justify-center z-10">
-        <div className="text-[12px] text-[#007AFF] font-bold hover:text-[#007AFF]">SEE ALL </div>
+      <div
+        onClick={() => router.push("/magazineList")}
+        className="absolute top-7 right-4 flex items-center justify-center z-10"
+      >
+        <div className="text-[12px] text-[#007AFF] font-bold hover:text-[#007AFF]">
+          SEE ALL{" "}
+        </div>
         <IoIosArrowForward className="text-[#007AFF] font-bold" />
       </div>
       <div className="flex w-full border-t border-gray-200 mb-2">
         <div className="flex w-full justify-center">
           <button
             className={`text-[12px] py-3 text-center font-medium ${
-              selected === "michelin" 
-                ? "border-t-4 border-black text-black relative" 
+              selected === "michelin"
+                ? "border-t-4 border-black text-black relative"
                 : "text-gray-500"
             }`}
             onClick={() => setSelected("michelin")}
           >
             <span className={`${selected === "michelin" ? "relative" : ""}`}>
               미슐랭매거진
-              
             </span>
           </button>
         </div>
@@ -101,19 +105,20 @@ export function MagazineCarousel() {
               <Card className="w-full">
                 <CardBody className="p-0">
                   <Link href={`/magazine/${magazines[currentSlide].id}`}>
-                    <Image
-                      src={
-                        magazines[currentSlide]?.photo[0]["url"] ||
-                        `/images/noimage.jpg`
-                      }
-                      alt={magazines[currentSlide]?.title}
-                      width={800}
-                      height={454}
-                      className="object-cover"
-                      loading="lazy"
-                      placeholder="blur"
-                      blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAEhgJAi9TUHAAAAABJRU5ErkJggg=="
-                    />
+                    <div className="w-full h-[400px] relative">
+                      <Image
+                        src={
+                          magazines[currentSlide]?.photo[0]["url"] ||
+                          `/images/noimage.jpg`
+                        }
+                        alt={magazines[currentSlide]?.title}
+                        fill
+                        className="object-cover"
+                        loading="lazy"
+                        placeholder="blur"
+                        blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAEhgJAi9TUHAAAAABJRU5ErkJggg=="
+                      />
+                    </div>
                   </Link>
                   <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent text-white">
                     <h3 className="text-xl font-bold">

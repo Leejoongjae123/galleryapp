@@ -179,7 +179,7 @@ const ExhibitionCarousel = memo(function ExhibitionCarousel({
       <div className="w-full max-w-full overflow-hidden my-4">
         <div className="w-full">
           <div
-            className="flex overflow-x-auto gap-3 pb-4 scrollbar-hide"
+            className="flex h-[200px] gap-3 pb-4 scrollbar-hide"
             style={{ scrollBehavior: "smooth" }}
           >
             {Array(8)

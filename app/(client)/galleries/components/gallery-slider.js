@@ -101,19 +101,17 @@ export function GallerySlider({ galleries, loading, user, toggleBookmark, isBook
     <div className="w-full">
       {loading ? (
         <div className="flex space-x-4 overflow-x-auto pb-4">
-          {Array(5)
-            .fill(null)
-            .map((_, index) => (
-              <div key={index} className="flex-shrink-0 w-[200px]">
-                <Card className="w-[200px] h-[240px]">
-                  <Skeleton className="w-full h-[140px]" />
-                  <CardBody className="p-3">
-                    <Skeleton className="w-3/4 h-4 mb-2" />
-                    <Skeleton className="w-1/2 h-3" />
-                  </CardBody>
-                </Card>
-              </div>
-            ))}
+          {[1, 2, 3, 4, 5].map((_, index) => (
+            <div key={index} className="flex-shrink-0 w-[200px] pl-1">
+              <Card shadow="none" className="w-[200px] h-[240px]">
+                <Skeleton className="w-full h-[140px] rounded-xl" />
+                <CardBody className="p-3">
+                  <Skeleton className="h-4 w-3/4 mb-2 rounded-xl" />
+                  <Skeleton className="h-3 w-1/2 rounded-xl" />
+                </CardBody>
+              </Card>
+            </div>
+          ))}
         </div>
       ) : (
         <div
