@@ -27,7 +27,7 @@ import { FiPlusCircle } from "react-icons/fi";
 // useSearchParams를 사용하는 별도의 클라이언트 컴포넌트
 function ExhibitionListContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams({ suspense: true });
   const initialIsBookmark =
     searchParams.get("isBookmark") === "true" ||
     searchParams.get("isBookmark") === "1";
@@ -46,14 +46,17 @@ function ExhibitionListContent() {
   const [highRatingExhibitions, setHighRatingExhibitions] = useState([]);
   const [tabLoading, setTabLoading] = useState(false);
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
-
+  const [isFetching, setIsFetching] = useState(false);
+  
   const supabase = createClient();
 
   // 최초 한 번만 인기 전시회와 평점 높은 전시회 로드
   useEffect(() => {
     const fetchInitialData = async () => {
+      if (initialDataLoaded) return; // 이미 로드된 경우 중복 호출 방지
+      
       try {
-        if (initialDataLoaded) return; // 이미 로드된 경우 중복 호출 방지
+        setIsLoading(true);
         
         // 병렬로 데이터 요청
         const [popularExhibitionsResponse, highRatingExhibitionsResponse] = await Promise.all([
@@ -88,24 +91,24 @@ function ExhibitionListContent() {
         setInitialDataLoaded(true);
       } catch (error) {
         console.error("초기 데이터 로드 오류:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchInitialData();
-  }, [initialDataLoaded]);
+  }, []);
 
+  // 북마크 필터 상태가 변경될 때마다 전시회 목록 초기화
   useEffect(() => {
-    // 북마크 필터 상태가 변경될 때마다 전시회 목록 초기화 및 다시 불러오기
     setPage(1);
     setExhibitions([]);
-    setLoading(true); // 로딩 상태 활성화
-    setTabLoading(true); // 탭 변경 시 로딩 상태 활성화
-    // 데이터를 즉시 다시 불러오기 위해 useEffect 의존성 배열에 isBookmark 추가됨
+    setLoading(true);
+    setTabLoading(true);
   }, [selectedTab, isBookmark, selectedRegion]);
 
-  // fetchExhibitions 함수를 useCallback으로 메모이제이션하여 불필요한 재생성 방지
+  // fetchExhibitions 함수를 useCallback으로 메모이제이션
   const fetchExhibitions = useCallback(async () => {
-    // 이미 페칭 중이면 중복 호출 방지
     if (isFetching) return;
     
     try {
@@ -113,18 +116,15 @@ function ExhibitionListContent() {
       
       // 북마크 필터가 활성화되어 있지만 사용자가 로그인하지 않은 경우
       if (isBookmark && !user) {
-        console.log("북마크 필터 활성화됨, 로그인 필요");
         setExhibitions([]);
         setHasMore(false);
         setLoading(false);
         setTabLoading(false);
-        setIsLoading(false);
         return;
       }
 
       // 북마크 필터가 활성화되어 있고 사용자가 로그인했지만 북마크 데이터가 아직 로드 중인 경우
       if (isBookmark && user && loadingBookmarks) {
-        console.log("북마크 데이터 로딩 중, 대기");
         return; // 북마크 데이터가 로드될 때까지 대기
       }
 
@@ -160,7 +160,6 @@ function ExhibitionListContent() {
           setHasMore(false);
           setLoading(false);
           setTabLoading(false);
-          setIsLoading(false);
           return;
         }
 
@@ -175,7 +174,7 @@ function ExhibitionListContent() {
       if (page === 1) {
         setExhibitions(data);
       } else {
-        // 중복 방지를 위해 함수형 업데이트로 처리하여 최신 상태 참조
+        // 중복 방지를 위해 함수형 업데이트로 처리
         setExhibitions((prevExhibitions) => {
           const existingIds = new Set(prevExhibitions.map(ex => ex.id));
           const newData = data.filter(ex => !existingIds.has(ex.id));
@@ -189,68 +188,33 @@ function ExhibitionListContent() {
     } finally {
       setLoading(false);
       setTabLoading(false);
-      setIsLoading(false);
       setIsFetching(false);
     }
-  }, [page, selectedTab, selectedRegion, isBookmark, bookmarks, user, loadingBookmarks]);
+  }, [page, selectedTab, selectedRegion, isBookmark, bookmarks, user, loadingBookmarks, supabase]);
 
-  // 실제 데이터 페칭을 트리거하는 useEffect - 데이터 중복 요청 방지 위한 플래그 추가
-  const [isFetching, setIsFetching] = useState(false);
-  
-  // 필터 변경 시 데이터 초기화 및 페칭을 위한 useEffect
+  // 데이터 페칭을 트리거하는 useEffect - 페이지 변경 시 호출
   useEffect(() => {
-    const fetchData = async () => {
-      // 페이지가 1일 때만 로딩 상태 활성화
-      if (page === 1) {
-        setLoading(true);
-      }
-      
-      // 이미 페칭 중이면 중복 호출 방지
-      if (isFetching) return;
-      
-      // 필터 변경 시 페이지 초기화
-      if (page !== 1) {
-        setPage(1);
-        setExhibitions([]);
-        return;
-      }
-
-      // 로드 상태 체크하기 위한 타이머 설정
-      const loadTimer = setTimeout(() => {
-        if (user === null && loadingBookmarks === false) {
-          fetchExhibitions();
-        } else if (user && !loadingBookmarks) {
-          fetchExhibitions();
-        }
-      }, 300); // 디바운스 적용
-      
-      return () => clearTimeout(loadTimer);
-    };
-
-    fetchData();
-  }, [selectedTab, isBookmark, selectedRegion, user, loadingBookmarks, fetchExhibitions]);
-
-  // 페이지 변경 시 추가 데이터 로드를 위한 useEffect
-  useEffect(() => {
-    if (page > 1 && !isFetching) {
+    if (page > 1) {
       fetchExhibitions();
     }
   }, [page, fetchExhibitions]);
-
-  // 필터 변경 시에만 데이터 초기화하도록 별도 useEffect 사용
+  
+  // 필터 변경 시 데이터 로드
   useEffect(() => {
-    // 필터 변경 시에만 데이터 초기화
-    setPage(1);
-    setExhibitions([]);
-    setLoading(true);
-    setTabLoading(true);
-  }, [selectedTab, isBookmark, selectedRegion]);
+    const loadTimer = setTimeout(() => {
+      if (page === 1) {
+        fetchExhibitions();
+      }
+    }, 100); // 짧은 디바운스 적용
+    
+    return () => clearTimeout(loadTimer);
+  }, [selectedTab, isBookmark, selectedRegion, user, loadingBookmarks, page, fetchExhibitions]);
 
   const loadMore = useCallback(() => {
-    if (!loading && hasMore) {
+    if (!loading && hasMore && !isFetching) {
       setPage((prevPage) => prevPage + 1);
     }
-  }, [loading, hasMore]);
+  }, [loading, hasMore, isFetching]);
 
   // 사용자 정보 가져오기
   useEffect(() => {
@@ -261,7 +225,7 @@ function ExhibitionListContent() {
       if (session) {
         setUser(session.user);
       } else {
-        setUser(null); // 명시적으로 null 설정
+        setUser(null);
       }
     };
     fetchUser();
@@ -287,14 +251,24 @@ function ExhibitionListContent() {
     } finally {
       setLoadingBookmarks(false);
     }
-  }, [user]);
+  }, [user, supabase]);
+
+  // 컴포넌트 마운트 시 북마크 로드
+  useEffect(() => {
+    if (user) {
+      fetchBookmarks();
+    }
+  }, [user, fetchBookmarks]);
 
   // 북마크 상태 확인하는 함수 - useMemo로 최적화
-  const isBookmarked = useCallback((exhibitionId) => {
-    return bookmarks.some(
-      (bookmark) => bookmark.exhibition_id === exhibitionId
-    );
-  }, [bookmarks]);
+  const isBookmarked = useCallback(
+    (exhibitionId) => {
+      return bookmarks.some(
+        (bookmark) => bookmark.exhibition_id === exhibitionId
+      );
+    },
+    [bookmarks]
+  );
 
   // 북마크 토글 함수
   const toggleBookmark = useCallback(async (e, exhibition) => {
@@ -361,9 +335,10 @@ function ExhibitionListContent() {
         });
       }
       
-      // 북마크 필터가 활성화된 경우 데이터 리로드 트리거
+      // 북마크 필터가 활성화된 경우 데이터 다시 로드
       if (isBookmark) {
-        setFetchTrigger(prev => prev + 1);
+        setPage(1);
+        fetchExhibitions();
       }
     } catch (error) {
       console.error("북마크 토글 에러:", error);
@@ -377,14 +352,7 @@ function ExhibitionListContent() {
         timeout: 3000,
       });
     }
-  }, [user, isBookmarked, isBookmark]);
-
-  // 컴포넌트 마운트 시 북마크 로드
-  useEffect(() => {
-    if (user) {
-      fetchBookmarks();
-    }
-  }, [user, fetchBookmarks]);
+  }, [user, isBookmarked, isBookmark, supabase, fetchExhibitions]);
 
   // URL 매개변수 업데이트 함수
   const updateBookmarkUrlParam = useCallback((isBookmarked) => {
