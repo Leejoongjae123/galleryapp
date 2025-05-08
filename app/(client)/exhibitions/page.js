@@ -197,30 +197,45 @@ function ExhibitionListContent() {
   // 실제 데이터 페칭을 트리거하는 useEffect - 데이터 중복 요청 방지 위한 플래그 추가
   const [isFetching, setIsFetching] = useState(false);
   
+  // 필터 변경 시 데이터 초기화 및 페칭을 위한 useEffect
   useEffect(() => {
-    // 페이지가 1일 때만 로딩 상태 활성화
-    if (page === 1) {
-      setLoading(true);
-    }
-    
-    // 이미 페칭 중이면 중복 호출 방지
-    if (isFetching) return;
-    
-    // 로드 상태 체크하기 위한 타이머 설정
-    const loadTimer = setTimeout(() => {
-      setIsFetching(true);
-      
-      if (user === null && loadingBookmarks === false) {
-        fetchExhibitions().finally(() => setIsFetching(false));
-      } else if (user && !loadingBookmarks) {
-        fetchExhibitions().finally(() => setIsFetching(false));
-      } else {
-        setIsFetching(false);
+    const fetchData = async () => {
+      // 페이지가 1일 때만 로딩 상태 활성화
+      if (page === 1) {
+        setLoading(true);
       }
-    }, 300); // 디바운스 적용
-    
-    return () => clearTimeout(loadTimer);
-  }, [fetchExhibitions, user, loadingBookmarks, page]);
+      
+      // 이미 페칭 중이면 중복 호출 방지
+      if (isFetching) return;
+      
+      // 필터 변경 시 페이지 초기화
+      if (page !== 1) {
+        setPage(1);
+        setExhibitions([]);
+        return;
+      }
+
+      // 로드 상태 체크하기 위한 타이머 설정
+      const loadTimer = setTimeout(() => {
+        if (user === null && loadingBookmarks === false) {
+          fetchExhibitions();
+        } else if (user && !loadingBookmarks) {
+          fetchExhibitions();
+        }
+      }, 300); // 디바운스 적용
+      
+      return () => clearTimeout(loadTimer);
+    };
+
+    fetchData();
+  }, [selectedTab, isBookmark, selectedRegion, user, loadingBookmarks, fetchExhibitions]);
+
+  // 페이지 변경 시 추가 데이터 로드를 위한 useEffect
+  useEffect(() => {
+    if (page > 1 && !isFetching) {
+      fetchExhibitions();
+    }
+  }, [page, fetchExhibitions]);
 
   // 필터 변경 시에만 데이터 초기화하도록 별도 useEffect 사용
   useEffect(() => {
@@ -229,7 +244,6 @@ function ExhibitionListContent() {
     setExhibitions([]);
     setLoading(true);
     setTabLoading(true);
-    // 필터 변경 시 즉시 데이터를 다시 불러오지 않고, 위의 useEffect에서 처리
   }, [selectedTab, isBookmark, selectedRegion]);
 
   const loadMore = useCallback(() => {
