@@ -1,5 +1,5 @@
 "use client";
-import React, { Suspense, useCallback, useMemo } from "react";
+import React, { Suspense } from "react";
 import { ExhibitionCards } from "./components/exhibition-cards";
 import ExhibitionCarousel from "./components/exhibition-carousel";
 import {
@@ -45,220 +45,179 @@ function ExhibitionListContent() {
   const [popularExhibitions, setPopularExhibitions] = useState([]);
   const [highRatingExhibitions, setHighRatingExhibitions] = useState([]);
   const [tabLoading, setTabLoading] = useState(false);
-  const [initialDataLoaded, setInitialDataLoaded] = useState(false);
 
   const supabase = createClient();
-
-  // 최초 한 번만 인기 전시회와 평점 높은 전시회 로드
-  useEffect(() => {
-    const fetchInitialData = async () => {
-      try {
-        if (initialDataLoaded) return; // 이미 로드된 경우 중복 호출 방지
-        
-        // 병렬로 데이터 요청
-        const [popularExhibitionsResponse, highRatingExhibitionsResponse] = await Promise.all([
-          supabase
-            .from("exhibition")
-            .select("*,gallery:naver_gallery_url(*)")
-            .eq("isRecommended", true)
-            .gte("end_date", new Date().toISOString())
-            .limit(5),
-          
-          supabase
-            .from("exhibition")
-            .select("*,gallery:naver_gallery_url(*)")
-            .not("gallery", "is", null)
-            .order("review_average", { ascending: false })
-            .gte("end_date", new Date().toISOString())
-            .limit(9)
-        ]);
-
-        if (popularExhibitionsResponse.error) {
-          console.error("인기 전시회 데이터 로드 오류:", popularExhibitionsResponse.error);
-        } else {
-          setPopularExhibitions(popularExhibitionsResponse.data || []);
-        }
-
-        if (highRatingExhibitionsResponse.error) {
-          console.error("평점 높은 전시회 데이터 로드 오류:", highRatingExhibitionsResponse.error);
-        } else {
-          setHighRatingExhibitions(highRatingExhibitionsResponse.data || []);
-        }
-
-        setInitialDataLoaded(true);
-      } catch (error) {
-        console.error("초기 데이터 로드 오류:", error);
-      }
-    };
-
-    fetchInitialData();
-  }, [initialDataLoaded]);
 
   useEffect(() => {
     // 북마크 필터 상태가 변경될 때마다 전시회 목록 초기화 및 다시 불러오기
     setPage(1);
     setExhibitions([]);
-    setLoading(true); // 로딩 상태 활성화
     setTabLoading(true); // 탭 변경 시 로딩 상태 활성화
     // 데이터를 즉시 다시 불러오기 위해 useEffect 의존성 배열에 isBookmark 추가됨
   }, [selectedTab, isBookmark, selectedRegion]);
 
-  // fetchExhibitions 함수를 useCallback으로 메모이제이션하여 불필요한 재생성 방지
-  const fetchExhibitions = useCallback(async () => {
-    // 이미 페칭 중이면 중복 호출 방지
-    if (isFetching) return;
-    
-    try {
-      setIsFetching(true);
-      
-      // 북마크 필터가 활성화되어 있지만 사용자가 로그인하지 않은 경우
-      if (isBookmark && !user) {
-        console.log("북마크 필터 활성화됨, 로그인 필요");
-        setExhibitions([]);
-        setHasMore(false);
-        setLoading(false);
-        setTabLoading(false);
-        setIsLoading(false);
-        return;
-      }
+  useEffect(() => {
+    const fetchExhibitions = async () => {
+      setLoading(true);
 
-      // 북마크 필터가 활성화되어 있고 사용자가 로그인했지만 북마크 데이터가 아직 로드 중인 경우
-      if (isBookmark && user && loadingBookmarks) {
-        console.log("북마크 데이터 로딩 중, 대기");
-        return; // 북마크 데이터가 로드될 때까지 대기
-      }
+      try {
+        console.log("fetchExhibitions 실행:", {
+          isBookmark,
+          userExists: !!user,
+          bookmarksLength: bookmarks.length,
+          loadingBookmarks,
+        });
 
-      let query = supabase
-        .from("exhibition")
-        .select("*,gallery:naver_gallery_url(*)")
-        .not("gallery", "is", null)
-        .order("review_count", { ascending: false })
-        .gte("end_date", new Date().toISOString());
-
-      // 선택된 탭에 따라 필터 적용
-      if (selectedTab === "free") {
-        query = query.eq("isFree", true);
-      } else if (selectedTab === "recommended") {
-        query = query.eq("isRecommended", true);
-      }
-
-      // 지역 필터 적용
-      if (selectedRegion) {
-        query = query.ilike("gallery.address", `%${selectedRegion}%`);
-      }
-
-      // 북마크 필터 적용
-      if (isBookmark && user) {
-        // null이 아닌 유효한 exhibition_id만 필터링
-        const bookmarkedIds = bookmarks
-          .filter((b) => b.exhibition_id !== null)
-          .map((b) => b.exhibition_id);
-
-        if (bookmarkedIds.length === 0) {
-          // 북마크가 없거나 모두 null인 경우 빈 결과 반환
+        // 북마크 필터가 활성화되어 있지만 사용자가 로그인하지 않은 경우
+        if (isBookmark && !user) {
+          console.log("북마크 필터 활성화됨, 로그인 필요");
           setExhibitions([]);
           setHasMore(false);
           setLoading(false);
-          setTabLoading(false);
-          setIsLoading(false);
           return;
         }
 
-        query = query.in("id", bookmarkedIds);
+        // 북마크 필터가 활성화되어 있고 사용자가 로그인했지만 북마크 데이터가 아직 로드 중인 경우
+        if (isBookmark && user && loadingBookmarks) {
+          console.log("북마크 데이터 로딩 중, 대기");
+          return; // 북마크 데이터가 로드될 때까지 대기
+        }
+
+        const { data: popularExhibitionsData, error: popularExhibitionsError } =
+          await supabase
+            .from("exhibition")
+            .select("*,gallery:naver_gallery_url(*)")
+            .eq("isRecommended", true)
+            .gte("end_date", new Date().toISOString())
+            .limit(5);
+
+        if (popularExhibitionsError) {
+          console.error(
+            "인기 전시회 데이터 로드 오류:",
+            popularExhibitionsError
+          );
+        } else {
+          setPopularExhibitions(popularExhibitionsData);
+        }
+        const {
+          data: highRatingExhibitionsData,
+          error: highRatingExhibitionsError,
+        } = await supabase
+          .from("exhibition")
+          .select("*,gallery:naver_gallery_url(*)")
+          .not("gallery", "is", null)
+          .order("review_average", { ascending: false })
+          .gte("end_date", new Date().toISOString())
+          .limit(9);
+        if (highRatingExhibitionsError) {
+          console.error(
+            "인기 전시회 데이터 로드 오류:",
+            highRatingExhibitionsError
+          );
+        } else {
+          setHighRatingExhibitions(highRatingExhibitionsData);
+        }
+
+        let query = supabase
+          .from("exhibition")
+          .select("*,gallery:naver_gallery_url(*)")
+          .not("gallery", "is", null)
+          .order("review_count", { ascending: false })
+          .gte("end_date", new Date().toISOString());
+
+        // 선택된 탭에 따라 필터 적용
+        if (selectedTab === "free") {
+          query = query.eq("isFree", true);
+        } else if (selectedTab === "recommended") {
+          query = query.eq("isRecommended", true);
+        }
+
+        // 지역 필터 적용
+        if (selectedRegion) {
+          query = query.ilike("gallery.address", `%${selectedRegion}%`);
+        }
+
+        // 북마크 필터 적용
+        if (isBookmark && user) {
+          console.log("북마크 필터링 적용");
+
+          // null이 아닌 유효한 exhibition_id만 필터링
+          const bookmarkedIds = bookmarks
+            .filter((b) => b.exhibition_id !== null)
+            .map((b) => b.exhibition_id);
+
+          console.log("북마크된 전시회 ID:", bookmarkedIds);
+
+          if (bookmarkedIds.length === 0) {
+            // 북마크가 없거나 모두 null인 경우 빈 결과 반환
+            console.log("북마크된 전시회 없음");
+            setExhibitions([]);
+            setHasMore(false);
+            setLoading(false);
+            return;
+          }
+
+          query = query.in("id", bookmarkedIds);
+        }
+
+        const { data, error } = await query.range((page - 1) * 5, page * 5 - 1);
+
+        if (error) throw error;
+
+        console.log("가져온 전시회 데이터:", data.length);
+
+        if (page === 1) {
+          setExhibitions(data);
+        } else {
+          setExhibitions((prevExhibitions) => [...prevExhibitions, ...data]);
+        }
+
+        setHasMore(data.length === 5);
+      } catch (error) {
+        console.error("전시회 데이터를 가져오는 중 오류 발생:", error);
+      } finally {
+        setIsLoading(false);
+        setLoading(false);
+        setTabLoading(false); // 데이터 로드 완료 시 탭 로딩 상태 비활성화
       }
+    };
 
-      // 페이지네이션 적용 - 한 번에 5개씩만 로드
-      const { data, error } = await query.range((page - 1) * 5, page * 5 - 1);
+    fetchExhibitions();
+  }, [
+    page,
+    selectedTab,
+    selectedRegion,
+    isBookmark,
+    bookmarks,
+    user,
+    loadingBookmarks,
+  ]);
 
-      if (error) throw error;
-
-      if (page === 1) {
-        setExhibitions(data);
-      } else {
-        // 중복 방지를 위해 함수형 업데이트로 처리하여 최신 상태 참조
-        setExhibitions((prevExhibitions) => {
-          const existingIds = new Set(prevExhibitions.map(ex => ex.id));
-          const newData = data.filter(ex => !existingIds.has(ex.id));
-          return [...prevExhibitions, ...newData];
-        });
-      }
-
-      setHasMore(data.length === 5);
-    } catch (error) {
-      console.error("전시회 데이터를 가져오는 중 오류 발생:", error);
-    } finally {
-      setLoading(false);
-      setTabLoading(false);
-      setIsLoading(false);
-      setIsFetching(false);
-    }
-  }, [page, selectedTab, selectedRegion, isBookmark, bookmarks, user, loadingBookmarks]);
-
-  // 실제 데이터 페칭을 트리거하는 useEffect - 데이터 중복 요청 방지 위한 플래그 추가
-  const [isFetching, setIsFetching] = useState(false);
-  
-  useEffect(() => {
-    // 페이지가 1일 때만 로딩 상태 활성화
-    if (page === 1) {
-      setLoading(true);
-    }
-    
-    // 이미 페칭 중이면 중복 호출 방지
-    if (isFetching) return;
-    
-    // 로드 상태 체크하기 위한 타이머 설정
-    const loadTimer = setTimeout(() => {
-      setIsFetching(true);
-      
-      if (user === null && loadingBookmarks === false) {
-        fetchExhibitions().finally(() => setIsFetching(false));
-      } else if (user && !loadingBookmarks) {
-        fetchExhibitions().finally(() => setIsFetching(false));
-      } else {
-        setIsFetching(false);
-      }
-    }, 300); // 디바운스 적용
-    
-    return () => clearTimeout(loadTimer);
-  }, [fetchExhibitions, user, loadingBookmarks, page]);
-
-  // 필터 변경 시에만 데이터 초기화하도록 별도 useEffect 사용
-  useEffect(() => {
-    // 필터 변경 시에만 데이터 초기화
-    setPage(1);
-    setExhibitions([]);
-    setLoading(true);
-    setTabLoading(true);
-    // 필터 변경 시 즉시 데이터를 다시 불러오지 않고, 위의 useEffect에서 처리
-  }, [selectedTab, isBookmark, selectedRegion]);
-
-  const loadMore = useCallback(() => {
-    if (!loading && hasMore) {
-      setPage((prevPage) => prevPage + 1);
-    }
-  }, [loading, hasMore]);
+  const loadMore = () => {
+    setPage((prevPage) => prevPage + 1);
+  };
 
   // 사용자 정보 가져오기
   useEffect(() => {
     const fetchUser = async () => {
       const {
         data: { session },
+        error,
       } = await supabase.auth.getSession();
       if (session) {
         setUser(session.user);
-      } else {
-        setUser(null); // 명시적으로 null 설정
       }
     };
     fetchUser();
   }, []);
 
   // 사용자의 북마크 목록 가져오기
-  const fetchBookmarks = useCallback(async () => {
+  const fetchBookmarks = async () => {
     if (!user) return;
 
     try {
       setLoadingBookmarks(true);
+      console.log("북마크 데이터 로드 중...");
 
       const { data, error } = await supabase
         .from("bookmark")
@@ -267,33 +226,30 @@ function ExhibitionListContent() {
 
       if (error) throw error;
 
+      console.log("북마크 데이터 로드 완료:", data?.length || 0);
       setBookmarks(data || []);
     } catch (error) {
       console.error("북마크 로드 에러:", error);
     } finally {
       setLoadingBookmarks(false);
     }
-  }, [user]);
+  };
 
-  // 북마크 상태 확인하는 함수 - useMemo로 최적화
-  const isBookmarked = useCallback((exhibitionId) => {
+  // 북마크 상태 확인하는 함수
+  const isBookmarked = (exhibitionId) => {
     return bookmarks.some(
       (bookmark) => bookmark.exhibition_id === exhibitionId
     );
-  }, [bookmarks]);
+  };
 
   // 북마크 토글 함수
-  const toggleBookmark = useCallback(async (e, exhibition) => {
+  const toggleBookmark = async (e, exhibition) => {
     e.preventDefault(); // 링크 이벤트 방지
     e.stopPropagation(); // 이벤트 버블링 방지
 
     if (!user) {
       // 사용자가 로그인하지 않은 경우 처리
-      addToast({
-        title: "로그인 필요",
-        description: "북마크를 추가하려면 로그인이 필요합니다.",
-        color: "danger",
-      });
+      alert("북마크를 추가하려면 로그인이 필요합니다.");
       return;
     }
 
@@ -311,8 +267,8 @@ function ExhibitionListContent() {
         if (error) throw error;
 
         // 북마크 목록에서 제거
-        setBookmarks(prevBookmarks => 
-          prevBookmarks.filter(
+        setBookmarks(
+          bookmarks.filter(
             (bookmark) => bookmark.exhibition_id !== exhibition.id
           )
         );
@@ -336,8 +292,8 @@ function ExhibitionListContent() {
 
         if (error) throw error;
 
-        // 북마크 목록에 추가 - 함수형 업데이트 사용
-        setBookmarks(prevBookmarks => [...prevBookmarks, data[0]]);
+        // 북마크 목록에 추가
+        setBookmarks([...bookmarks, data[0]]);
 
         // 북마크 추가 토스트 표시
         addToast({
@@ -345,11 +301,6 @@ function ExhibitionListContent() {
           description: `${exhibition.name} 북마크에 추가되었습니다.`,
           color: "success",
         });
-      }
-      
-      // 북마크 필터가 활성화된 경우 데이터 리로드 트리거
-      if (isBookmark) {
-        setFetchTrigger(prev => prev + 1);
       }
     } catch (error) {
       console.error("북마크 토글 에러:", error);
@@ -363,17 +314,18 @@ function ExhibitionListContent() {
         timeout: 3000,
       });
     }
-  }, [user, isBookmarked, isBookmark]);
+  };
 
   // 컴포넌트 마운트 시 북마크 로드
   useEffect(() => {
     if (user) {
+      console.log("사용자 로그인 확인됨, 북마크 로드 시작");
       fetchBookmarks();
     }
-  }, [user, fetchBookmarks]);
+  }, [user]);
 
   // URL 매개변수 업데이트 함수
-  const updateBookmarkUrlParam = useCallback((isBookmarked) => {
+  const updateBookmarkUrlParam = (isBookmarked) => {
     const url = new URL(window.location);
     if (isBookmarked) {
       url.searchParams.set("isBookmark", "true");
@@ -381,14 +333,11 @@ function ExhibitionListContent() {
       url.searchParams.delete("isBookmark");
     }
     window.history.pushState({}, "", url);
-  }, []);
-
-  // 전체 페이지 로딩 상태 - 초기 데이터가 로드되지 않은 경우에만 true
-  const pageLoading = !initialDataLoaded || (user && loadingBookmarks);
-
+  };
+  console.log("popularExhibitions", popularExhibitions);
   return (
     <div className="flex flex-col items-center justify-center">
-      {pageLoading ? (
+      {isLoading ? (
         <div className="flex flex-col items-center justify-center w-full h-full gap-y-6 mt-12">
           {Array(5)
             .fill(null)
@@ -537,7 +486,7 @@ function ExhibitionListContent() {
               </Checkbox>
             </div>
             {/* 전시회 카드 */}
-            {loading ? (
+            {tabLoading ? (
               <div className="flex justify-center items-center w-full my-8">
                 <Spinner variant="wave" size="lg" color="primary" />
               </div>
@@ -551,20 +500,16 @@ function ExhibitionListContent() {
               />
             )}
 
-            {!loading && hasMore ? (
+            {!tabLoading && hasMore ? (
               <div className="flex justify-center items-center mt-4">
                 <FiPlusCircle
                   className="text-gray-500 text-2xl font-bold hover:cursor-pointer"
                   onClick={loadMore}
                 />
               </div>
-            ) : !loading && exhibitions.length > 0 ? (
+            ) : !tabLoading && (
               <div className="flex justify-center items-center">
                 <p className="text-gray-500 my-4">모든 전시회를 불러왔습니다</p>
-              </div>
-            ) : !loading && exhibitions.length === 0 && (
-              <div className="flex justify-center items-center py-8">
-                <p className="text-gray-500">전시회가 없습니다</p>
               </div>
             )}
           </div>
