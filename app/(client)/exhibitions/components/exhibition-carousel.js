@@ -4,6 +4,7 @@ import { FaRegStar } from "react-icons/fa";
 import { FaStar } from "react-icons/fa";
 import { FaRegBookmark, FaBookmark } from "react-icons/fa6";
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState, useCallback, useRef, memo } from "react";
 
 // 스켈레톤 UI 컴포넌트 메모이제이션
@@ -44,9 +45,11 @@ const ExhibitionCard = memo(({ exhibition, isDraggingRef }) => (
   >
     <Card className="h-[240px] overflow-hidden shadow hover:shadow-lg transition-shadow rounded-xl">
       <div className="relative">
-        <img
+        <Image
           src={exhibition.photo || "/images/noimage.jpg"}
           alt={exhibition.name || "전시회 이미지"}
+          width={180}
+          height={140}
           className="h-[140px] w-full object-cover"
           loading="lazy"
         />

@@ -6,6 +6,7 @@ import { IoMdPin } from "react-icons/io";
 import { FaRegStar } from "react-icons/fa";
 import { FaRegBookmark, FaBookmark } from "react-icons/fa6";
 import Link from "next/link";
+import Image from "next/image";
 import { FaPlusCircle } from "react-icons/fa";
 
 // 개별 전시회 카드 컴포넌트를 메모이제이션
@@ -15,11 +16,13 @@ const ExhibitionCard = memo(({ exhibition, toggleBookmark, isBookmarked }) => {
       <Link href={`/exhibition/${exhibition.id}`}>
         <CardBody className="grid grid-cols-7 items-center justify-center gap-x-3">
           <div className="col-span-2">
-            <img
+            <Image
               src={exhibition.photo || "/images/noimage.jpg"}
-              alt={exhibition.title}
-              className="w-20 h-20 object-cover rounded"
-              loading="lazy" // 이미지 지연 로딩 추가
+              alt="main image"
+              width={80}
+              height={80}
+              className="object-cover rounded"
+              loading="lazy"
             />
           </div>
 
