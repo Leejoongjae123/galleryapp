@@ -88,7 +88,7 @@ function GalleryListContent() {
         setHighRatingGalleries(highRatingData || []);
         setFeaturedGalleriesLoaded(true); // 로드 완료 표시
       } catch (error) {
-        console.error("갤러리 데이터를 가져오는 중 오류 발생:", error);
+        console.log("갤러리 데이터를 가져오는 중 오류 발생:", error);
       } finally {
         setLoadingFeatured(false);
       }
@@ -100,11 +100,6 @@ function GalleryListContent() {
 
   useEffect(() => {
     const fetchGalleries = async () => {
-      // 페이지 번호가 변경되었을 때만 갤러리 데이터를 요청하도록 설정
-      if (page !== 1 && galleriesLoaded && galleries.length > 0) {
-        return;
-      }
-      
       // 첫 페이지이고 조건이 바뀌었거나, 아직 로드되지 않은 경우에는 로딩 상태 설정
       setLoading(true);
       
@@ -114,13 +109,13 @@ function GalleryListContent() {
           setGalleries([]);
           setHasMore(false);
           setLoading(false);
-          setTabLoading(false); // 탭 로딩 상태 비활성화 추가
+          setTabLoading(false);
           return;
         }
         
         // 북마크 필터가 활성화되어 있지만 북마크 데이터가 아직 로드되지 않은 경우
         if (isBookmark && loadingBookmarks) {
-          return; // 북마크 데이터가 로드될 때까지 대기
+          return;
         }
         
         let query = supabase
@@ -175,7 +170,7 @@ function GalleryListContent() {
         
         setHasMore(data.length === 5);
       } catch (error) {
-        console.error("갤러리 데이터를 가져오는 중 오류 발생:", error);
+        console.log("갤러리 데이터를 가져오는 중 오류 발생:", error);
       } finally {
         setLoading(false);
         setTabLoading(false); // 탭 로딩 상태 비활성화 추가
@@ -193,6 +188,7 @@ function GalleryListContent() {
   const loadMore = () => {
     setPage((prevPage) => prevPage + 1);
   };
+  console.log('page:', page)
 
   // 사용자 정보 가져오기
   useEffect(() => {
@@ -222,7 +218,7 @@ function GalleryListContent() {
       
       setBookmarks(data || []);
     } catch (error) {
-      console.error('북마크 로드 에러:', error);
+      console.log('북마크 로드 에러:', error);
     } finally {
       setLoadingBookmarks(false);
     }
@@ -290,7 +286,7 @@ function GalleryListContent() {
         });
       }
     } catch (error) {
-      console.error('북마크 토글 에러:', error);
+      console.log('북마크 토글 에러:', error);
       
       // 에러 토스트 표시
       addToast({
