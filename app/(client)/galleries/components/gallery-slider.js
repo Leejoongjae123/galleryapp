@@ -100,7 +100,7 @@ export function GallerySlider({ galleries, loading, user, toggleBookmark, isBook
   return (
     <div className="w-full">
       {loading ? (
-        <div className="flex space-x-4 overflow-x-auto pb-4">
+        <div className="flex space-x-4 pb-4">
           {[1, 2, 3, 4, 5].map((_, index) => (
             <div key={index} className="flex-shrink-0 w-[200px] pl-1">
               <Card shadow="none" className="w-[200px] h-[240px]">

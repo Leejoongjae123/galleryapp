@@ -45,7 +45,7 @@ export function GalleryCards({ galleries, user, bookmarks, toggleBookmark, isBoo
                           {user && isBookmarked && isBookmarked(gallery.id) ? (
                             <FaBookmark className="text-red-500 text-lg bg-gray-500 rounded-full p-1 font-bold" />
                           ) : (
-                            <FaRegBookmark className="text-white text-lg bg-gray-500 rounded-full p-1 font-bold" />
+                            <FaRegBookmark className="text-white text-lg bg-gray-200 rounded-full p-1 font-bold" />
                           )}
                         </div>
                       </div>
