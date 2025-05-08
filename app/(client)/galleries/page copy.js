@@ -34,8 +34,6 @@ function GalleryListContent() {
   const [loadingBookmarks, setLoadingBookmarks] = useState(false);
   const [highRatingGalleries, setHighRatingGalleries] = useState([]);
   const [tabLoading, setTabLoading] = useState(false);
-  const [featuredGalleriesLoaded, setFeaturedGalleriesLoaded] = useState(false);
-  const [galleriesLoaded, setGalleriesLoaded] = useState(false);
 
   useEffect(() => {
     if (isBookmarkParam) {
@@ -55,11 +53,6 @@ function GalleryListContent() {
   // 추천 갤러리 데이터 가져오기 (슬라이더용)
   useEffect(() => {
     const fetchFeaturedGalleries = async () => {
-      // 이미 데이터를 로드한 경우 다시 요청하지 않음
-      if (featuredGalleriesLoaded && featuredGalleries.length > 0 && highRatingGalleries.length > 0) {
-        return;
-      }
-      
       setLoadingFeatured(true);
       
       try {
@@ -86,7 +79,6 @@ function GalleryListContent() {
         if (highRatingError) throw highRatingError;
         
         setHighRatingGalleries(highRatingData || []);
-        setFeaturedGalleriesLoaded(true); // 로드 완료 표시
       } catch (error) {
         console.error("갤러리 데이터를 가져오는 중 오류 발생:", error);
       } finally {
@@ -95,17 +87,11 @@ function GalleryListContent() {
     };
     
     fetchFeaturedGalleries();
-  }, [featuredGalleriesLoaded, featuredGalleries.length, highRatingGalleries.length]);
+  }, []);
   console.log('galleries', galleries)
 
   useEffect(() => {
     const fetchGalleries = async () => {
-      // 페이지 번호가 변경되었을 때만 갤러리 데이터를 요청하도록 설정
-      if (page !== 1 && galleriesLoaded && galleries.length > 0) {
-        return;
-      }
-      
-      // 첫 페이지이고 조건이 바뀌었거나, 아직 로드되지 않은 경우에는 로딩 상태 설정
       setLoading(true);
       
       try {
@@ -164,12 +150,9 @@ function GalleryListContent() {
         
         if (error) throw error;
         
-        // 페이지가 1인 경우 (초기 로드 또는 필터 변경)
         if (page === 1) {
           setGalleries(data);
-          setGalleriesLoaded(true); // 로드 완료 표시
         } else {
-          // 추가 페이지 로드 (더 보기 기능)
           setGalleries((prevGalleries) => [...prevGalleries, ...data]);
         }
         
@@ -184,11 +167,6 @@ function GalleryListContent() {
     
     fetchGalleries();
   }, [page, selectedTab, selectedRegion, isBookmark, bookmarks, user, loadingBookmarks]);
-
-  // 필터 조건이 변경될 때 로드 상태 초기화
-  useEffect(() => {
-    setGalleriesLoaded(false);
-  }, [selectedTab, selectedRegion, isBookmark]);
 
   const loadMore = () => {
     setPage((prevPage) => prevPage + 1);
